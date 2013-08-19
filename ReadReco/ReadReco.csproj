@@ -53,6 +53,10 @@
       <Project>{22E315B9-1BBC-4D8E-A3C1-34074217385A}</Project>
       <Name>ReadReco.IO</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ReadReco.Model\ReadReco.Model.csproj">
+      <Project>{C0109B06-778E-4A52-AFFF-C9A7B632DCE3}</Project>
+      <Name>ReadReco.Model</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

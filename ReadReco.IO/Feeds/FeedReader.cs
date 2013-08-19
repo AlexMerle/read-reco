@@ -9,14 +9,7 @@ namespace ReadReco.IO.Feeds
 {
 	public class FeedReader
 	{
-		private string feedUrl = null;
-
-		public FeedReader(string url)
-		{
-			feedUrl = url;
-		}
-
-		public List<FeedItem> Read()
+		public List<FeedItem> Read(string feedUrl)
 		{
 			XmlReader reader = XmlReader.Create(feedUrl);
 			SyndicationFeed feed = SyndicationFeed.Load(reader);
