@@ -25,18 +25,31 @@ namespace ReadReco.IO.Feeds
 			Id = item.Id;
 			Title = WebUtility.HtmlDecode(item.Title.Text);
 
-			if (item.Content is TextSyndicationContent)
+			SyndicationContent content = item.Content ?? item.Summary;
+			if (!(content is TextSyndicationContent))
+				ContentText = string.Empty;
+
+			TextSyndicationContent textContent = (TextSyndicationContent)content;
+			if (textContent.Type.ToLower() == "html")
 			{
-				TextSyndicationContent textContent = (TextSyndicationContent)item.Content;
-				if (textContent.Type.ToLower() == "html")
+				HtmlDocument doc = new HtmlDocument();
+				doc.LoadHtml(textContent.Text);
+				ContentText = doc.DocumentNode.InnerText;
+			}
+			else
+			{
+				try
 				{
 					HtmlDocument doc = new HtmlDocument();
 					doc.LoadHtml(textContent.Text);
 					ContentText = doc.DocumentNode.InnerText;
 				}
-				else
+				catch
+				{
 					ContentText = textContent.Text;
+				}
 			}
+
 			ContentText = WebUtility.HtmlDecode(ContentText.Replace("\n", " "));
 
 			Tags = new List<string>();
