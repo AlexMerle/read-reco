@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Org.Carrot2.Core;
 using ReadReco.IO.Feeds;
+using ReadReco.Data.Model;
 
 namespace ReadReco.Model
 {

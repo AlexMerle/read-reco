@@ -6,6 +6,7 @@ using Iveonik.Stemmers;
 using ReadReco.IO.Feeds;
 using System.Reflection;
 using System.IO;
+using ReadReco.Data.Model;
 
 namespace ReadReco.Model
 {
@@ -22,7 +23,9 @@ namespace ReadReco.Model
 
 		private HashSet<string> stopWords = new HashSet<string>();
 		private Tokenizer tokenizer;
-		private const double LabelThreshold = 0.003;
+		private const double LabelThreshold = 0.2; // 20% //0.003;
+		private const int TitleWeight = 2;
+		private const int TagWeight = 2;
 		
 		public BagOfWords()
 		{
@@ -41,9 +44,26 @@ namespace ReadReco.Model
 			Type = type;
 		}
 
-		public void AddDocument(string document)
+		public BagOfWords(string name, UserInterest interest) : this()
 		{
-			Tokenizer.TokenList words = tokenizer.Tokenize(NormalizeText(document));
+			Name = name;
+			foreach (Label label in interest.Labels)
+				Labels.Add(label.Name, new WordFrequency() { Count = label.Count, Frequency = label.Frequency });
+		}
+
+		public void AddDocument(string title, string document, List<string> tags)
+		{
+			StringBuilder text = new StringBuilder();
+			for (int i = 0; i < TitleWeight; i++)
+				text.AppendLine(title);
+
+			foreach (string tag in tags)
+				for (int i = 0; i < TagWeight; i++)
+					text.AppendLine(tag);
+
+			text.AppendLine(document);
+
+			Tokenizer.TokenList words = tokenizer.Tokenize(NormalizeText(text.ToString()));
 
 			IStemmer stemmer = new EnglishStemmer();
 			foreach (Tokenizer.Token token in words.Where(w => w.Type == Tokenizer.TokenType.Identifier))
@@ -69,7 +89,7 @@ namespace ReadReco.Model
 				frequency.Value.Frequency = (double)frequency.Value.Count / Words.Count;
 			}
 
-			FillLabels();
+			ExtractLabels();
 
 			DocumentsCount++;
 		}
@@ -115,7 +135,7 @@ namespace ReadReco.Model
 			tokenizer.SymbolChars += ".,:;?!\"…";		// Continuation characters.
 			tokenizer.SymbolChars += "+-*/^–";		// Mathematical operators.
 			tokenizer.SymbolChars += "=<>";			// Conditional operators.
-			tokenizer.SymbolChars += "()[]{}";		// Grouping chracters.
+			tokenizer.SymbolChars += "()[]{}«»";		// Grouping chracters.
 
 			tokenizer.LiteralDelimiters = "";
 			//tokenizer.LiteralDelimiters += "'";		// Single quote.
@@ -139,9 +159,38 @@ namespace ReadReco.Model
 			}
 		}
 
-		private void FillLabels()
+		private void ExtractLabels()
 		{
-			Labels = WordsFrequency.Where(wf => wf.Value.Frequency > LabelThreshold).ToDictionary(t => t.Key, t => t.Value);
+			Labels.Clear();
+
+			var sortedFreq = GetSortedWords().Where(wf => wf.Value.Count > 1).Reverse();
+			double labelThreshold = WordsFrequency.Count * LabelThreshold;
+
+			int current = WordsFrequency.Count + 1;
+			var selectedFreq = new List<Tuple<string,WordFrequency>>();
+			foreach (var freq in sortedFreq)
+			{
+				if (freq.Value.Count < current)
+				{
+					if (selectedFreq.Count + Labels.Count > labelThreshold)
+						break;
+
+					foreach (var sel in selectedFreq)
+						Labels.Add(sel.Item1, sel.Item2);
+					
+					selectedFreq = new List<Tuple<string,WordFrequency>>();
+					current = freq.Value.Count;
+				}
+				selectedFreq.Add(new Tuple<string, WordFrequency>(freq.Key, freq.Value));
+			}
+
+			if (selectedFreq.Count > 0 && Labels.Count == 0)
+			{
+				foreach (var sel in selectedFreq)
+					Labels.Add(sel.Item1, sel.Item2);
+			}
+
+			//Labels = WordsFrequency.Where(wf => wf.Value.Frequency > LabelThreshold).ToDictionary(t => t.Key, t => t.Value);
 		}
 
 		public class WordFrequency

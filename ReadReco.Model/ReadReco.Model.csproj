@@ -88,6 +88,10 @@
     <Compile Include="Tokenizer.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ReadReco.Data\ReadReco.Data.csproj">
+      <Project>{45BFB19D-CFDE-47BB-802B-64EDC621DCE8}</Project>
+      <Name>ReadReco.Data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ReadReco.IO\ReadReco.IO.csproj">
       <Project>{22E315B9-1BBC-4D8E-A3C1-34074217385A}</Project>
       <Name>ReadReco.IO</Name>

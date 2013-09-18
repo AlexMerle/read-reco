@@ -5,3 +5,7 @@ ReadReco/obj/
 packages/
 ReadReco.Model/bin/
 ReadReco.Model/obj/
+ReadReco.Tests/bin/
+ReadReco.Tests/obj/
+ReadReco.Data/bin/
+ReadReco.Data/obj/

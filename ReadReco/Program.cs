@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using ReadReco.IO.Feeds;
 using ReadReco.Model;
+using ReadReco.Data.Model;
+using ReadReco.Services;
 
 namespace ReadReco
 {
@@ -11,64 +13,132 @@ namespace ReadReco
 	{
 		static void Main(string[] args)
 		{
-			//TestFeeds();
-			TestFeedItems();
+			if (args.Length == 0)
+			{
+				Console.Out.WriteLine("You need to enter a command in arguments");
+				return;
+			}
 
-			Console.In.ReadLine();
+			DataService dataService = new DataService();
+			FeedService feedService = new FeedService();
+			UserService userService = new UserService();
+			switch (args[0])
+			{
+				case "-addfeed":
+					if (args.Length != 3)
+						Console.Out.WriteLine("Incorrect number of parameters");
+
+					bool result = dataService.AddFeed(args[1], args[2]);
+					Console.Out.WriteLine("New feed successfully added");
+					break;
+
+				case "-refreshfeeds":	
+					int feedsCount = feedService.RefreshFeeds();
+					Console.Out.WriteLine("{0} new feed items added", feedsCount);
+					break;
+
+				case "-getlabels":
+					feedService.ExtractAllLabels();
+					Console.Out.WriteLine("Labels are successfully extracted");
+					break;
+
+				case "-testfeeds":
+					TestFeeds(feedService);
+					Console.In.ReadLine();
+					break;
+
+				case "-testfeeditems":
+					TestFeedItems(feedService);
+					Console.In.ReadLine();
+					break;
+
+				case "-adduser":
+					if (args.Length != 2)
+						Console.Out.WriteLine("Incorrect number of parameters");
+					userService.AddUser(args[1]);
+					Console.Out.WriteLine("New user successfully added");
+					
+					break;
+
+				case "-likedoc":
+					if (args.Length != 3)
+						Console.Out.WriteLine("Incorrect number of parameters");
+					FeedItem document = feedService.GetDocument(args[2]);
+					if (document == null)
+						Console.Out.WriteLine("Document was not found");
+
+					userService.LikeDocument(args[1], document);
+					Console.Out.WriteLine("Document was successfully liked");
+					break;
+			}
+
+			//TestFeeds();
+			//TestFeedItems();
+
+			//Console.In.ReadLine();
 		}
 
-		private static void TestFeeds()
+		private static void TestFeeds(FeedService feedService)
 		{
-			FeedReader reader = new FeedReader();
+			List<Feed> feeds = feedService.GetFeeds();
 
-			BagOfWords bag1 = AnalyzeFeed(reader, "http://www.lonelyplanet.com/blog/feed/atom/", "Lonely Planet");
-			BagOfWords bag2 = AnalyzeFeed(reader, "http://weblogs.asp.net/scottgu/atom.aspx", "Scott Gu");
-			BagOfWords bag3 = AnalyzeFeed(reader, "http://blogs.msdn.com/b/adonet/rss.aspx", "ADO.NET");
-			BagOfWords bag4 = AnalyzeFeed(reader, "http://neopythonic.blogspot.com/feeds/posts/default", "Python");
+			BagOfWords bag1 = feedService.AnalyzeFeed(feeds[0]);
+			BagOfWords bag2 = feedService.AnalyzeFeed(feeds[1]);
+			BagOfWords bag3 = feedService.AnalyzeFeed(feeds[2]);
+			BagOfWords bag4 = feedService.AnalyzeFeed(feeds[3]);
 
-			CompareBags(bag1, bag2);
-			CompareBags(bag1, bag3);
-			CompareBags(bag1, bag4);
-			CompareBags(bag2, bag3);
-			CompareBags(bag2, bag4);
-			CompareBags(bag3, bag4);
+			List<string> commonLabels = feedService.CompareBags(bag1, bag2);
+			OutputCommonLabels(bag1, bag2, commonLabels);
 
-			CalculateSimilarity(bag1, bag2, true);
-			//CalculateSimilarity(bag1, bag2, false);
+			commonLabels = feedService.CompareBags(bag1, bag3);
+			OutputCommonLabels(bag1, bag3, commonLabels);
 
-			CalculateSimilarity(bag1, bag3, true);
-			//CalculateSimilarity(bag1, bag3, false);
+			commonLabels = feedService.CompareBags(bag1, bag4);
+			OutputCommonLabels(bag1, bag4, commonLabels);
 
-			CalculateSimilarity(bag1, bag4, true);
-			//CalculateSimilarity(bag1, bag4, false);
+			commonLabels = feedService.CompareBags(bag2, bag3);
+			OutputCommonLabels(bag2, bag3, commonLabels);
 
-			CalculateSimilarity(bag2, bag3, true);
-			//CalculateSimilarity(bag2, bag3, false);
+			commonLabels = feedService.CompareBags(bag2, bag4);
+			OutputCommonLabels(bag2, bag4, commonLabels);
 
-			CalculateSimilarity(bag2, bag4, true);
-			//CalculateSimilarity(bag2, bag4, false);
+			commonLabels = feedService.CompareBags(bag3, bag4);
+			OutputCommonLabels(bag3, bag4, commonLabels);
 
-			CalculateSimilarity(bag3, bag4, true);
-			//CalculateSimilarity(bag3, bag4, false);
+			double similarity = feedService.CalculateSimilarity(bag1, bag2, true);
+			OutputSimilarity(bag1, bag2, similarity);
+
+			similarity = feedService.CalculateSimilarity(bag1, bag3, true);
+			OutputSimilarity(bag1, bag3, similarity);
+
+			similarity = feedService.CalculateSimilarity(bag1, bag4, true);
+			OutputSimilarity(bag1, bag4, similarity);
+
+			similarity = feedService.CalculateSimilarity(bag2, bag3, true);
+			OutputSimilarity(bag2, bag3, similarity);
+
+			similarity = feedService.CalculateSimilarity(bag2, bag4, true);
+			OutputSimilarity(bag2, bag4, similarity);
+
+			similarity = feedService.CalculateSimilarity(bag3, bag4, true);
+			OutputSimilarity(bag3, bag4, similarity);
 
 			//Clustering cluster = new Clustering();
 			//cluster.Clusterize(items);
 		}
 
-		private static void TestFeedItems()
+		private static void TestFeedItems(FeedService feedService)
 		{
-			FeedReader reader = new FeedReader();
+			List<Feed> feeds = feedService.GetFeeds();
 
 			List<BagOfWords> bags = new List<BagOfWords>();
-			bags.AddRange(AnalyzeFeedItems(reader, "http://www.lonelyplanet.com/blog/feed/atom/"));
-			bags.AddRange(AnalyzeFeedItems(reader, "http://weblogs.asp.net/scottgu/atom.aspx"));
-			bags.AddRange(AnalyzeFeedItems(reader, "http://blogs.msdn.com/b/adonet/rss.aspx"));
-			bags.AddRange(AnalyzeFeedItems(reader, "http://neopythonic.blogspot.com/feeds/posts/default"));
+			foreach (Feed feed in feeds)
+				bags.AddRange(feedService.AnalyzeFeedItems(feed));
 
 			Clustering clustering = new Clustering();
 			double[,] similars = new double[bags.Count, bags.Count];
-			Dictionary<Tuple<string, string>, double> docSimilars = new Dictionary<Tuple<string, string>, double>();
-			for (int i = 0; i < bags.Count-1; i++)
+			var docSimilars = new Dictionary<Tuple<BagOfWords, BagOfWords>, double>();
+			for (int i = 0; i < bags.Count - 1; i++)
 			{
 				for (int j = i + 1; j < bags.Count; j++)
 				{
@@ -76,59 +146,13 @@ namespace ReadReco
 						continue;
 					double sim = clustering.GetCosineDistance(bags[i], bags[j], true);
 					similars[i, j] = sim;
-					docSimilars.Add(new Tuple<string, string>(bags[i].Name, bags[j].Name), sim);
+					docSimilars.Add(new Tuple<BagOfWords, BagOfWords>(bags[i], bags[j]), sim);
 				}
 			}
 
+			Console.In.ReadLine();
+
 			OutputSimilarityMatrix(docSimilars);
-		}
-
-		private static BagOfWords AnalyzeFeed(FeedReader reader, string feedUrl, string name)
-		{
-			List<FeedItem> feedItems = reader.Read(feedUrl);
-			
-			BagOfWords bag = new BagOfWords(name, feedUrl);
-			foreach (FeedItem item in feedItems)
-			{
-				bag.AddDocument(item.ContentText);
-			}
-
-			OutputStatistics(bag);
-
-			return bag;
-		}
-
-		private static IEnumerable<BagOfWords> AnalyzeFeedItems(FeedReader reader, string feedUrl)
-		{
-			List<FeedItem> feedItems = reader.Read(feedUrl);
-			List<BagOfWords> bags = new List<BagOfWords>();
-
-			foreach (FeedItem item in feedItems)
-			{
-				BagOfWords bag = new BagOfWords(item.Title, feedUrl);
-				bag.AddDocument(item.ContentText);
-				yield return bag;
-			}
-		}
-
-		private static void CompareBags(BagOfWords bag1, BagOfWords bag2)
-		{
-			List<string> commonLabels = new List<string>();
-			foreach (string label1 in bag1.Labels.Keys)
-			{
-				if (bag2.Labels.ContainsKey(label1))
-					commonLabels.Add(label1);
-			}
-
-			OutputCommonLabels(bag1, bag2, commonLabels);
-		}
-
-		private static void CalculateSimilarity(BagOfWords bag1, BagOfWords bag2, bool useLabels)
-		{
-			Clustering clustering = new Clustering();
-			double similarity = clustering.GetCosineDistance(bag1, bag2, useLabels);
-
-			OutputSimilarity(bag1, bag2, similarity);
 		}
 
 		private static void OutputStatistics(BagOfWords bag)
@@ -171,9 +195,9 @@ namespace ReadReco
 			Console.Out.WriteLine();
 		}
 
-		private static void OutputSimilarityMatrix(Dictionary<Tuple<string, string>, double> docSimilars)
+		private static void OutputSimilarityMatrix(Dictionary<Tuple<BagOfWords, BagOfWords>, double> docSimilars)
 		{
-			List<KeyValuePair<Tuple<string, string>, double>> sortedList = docSimilars.ToList();
+			List<KeyValuePair<Tuple<BagOfWords, BagOfWords>, double>> sortedList = docSimilars.ToList();
 
 			sortedList.Sort((firstPair, nextPair) =>
 				{
@@ -181,9 +205,9 @@ namespace ReadReco
 				}
 			);
 
-			foreach (var sim in sortedList)
+			foreach (var sim in sortedList.Skip(sortedList.Count - 2))
 			{
-				Console.Out.WriteLine("Similarity for documents '{0}' and '{1}':", sim.Key.Item1, sim.Key.Item2);
+				Console.Out.WriteLine("Similarity for documents '{0}' and '{1}':", sim.Key.Item1.Name, sim.Key.Item2.Name);
 				Console.Out.WriteLine("- similarity: {0}", sim.Value);
 				Console.Out.WriteLine("---------------------");
 				Console.Out.WriteLine();

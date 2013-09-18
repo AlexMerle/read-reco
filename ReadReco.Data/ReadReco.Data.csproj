@@ -2,22 +2,20 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{F8167D8D-B7CB-49AE-8E7C-42C45A562431}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{45BFB19D-CFDE-47BB-802B-64EDC621DCE8}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ReadReco</RootNamespace>
-    <AssemblyName>ReadReco</AssemblyName>
+    <RootNamespace>ReadReco.Data</RootNamespace>
+    <AssemblyName>ReadReco.Data</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -26,8 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -36,6 +33,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MongoDB.Bson">
+      <HintPath>..\packages\mongocsharpdriver.1.8.2\lib\net35\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver">
+      <HintPath>..\packages\mongocsharpdriver.1.8.2\lib\net35\MongoDB.Driver.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -45,25 +48,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Services\DataService.cs" />
-    <Compile Include="Services\FeedService.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Model\Feed.cs" />
+    <Compile Include="Model\FeedItem.cs" />
+    <Compile Include="Model\Label.cs" />
+    <Compile Include="Model\UserInterest.cs" />
+    <Compile Include="Repository\Mongo\UserInterestRepository.cs" />
+    <Compile Include="Repository\Mongo\FeedRepository.cs" />
+    <Compile Include="Repository\IRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Services\UserService.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ReadReco.Data\ReadReco.Data.csproj">
-      <Project>{45BFB19D-CFDE-47BB-802B-64EDC621DCE8}</Project>
-      <Name>ReadReco.Data</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ReadReco.IO\ReadReco.IO.csproj">
-      <Project>{22E315B9-1BBC-4D8E-A3C1-34074217385A}</Project>
-      <Name>ReadReco.IO</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ReadReco.Model\ReadReco.Model.csproj">
-      <Project>{C0109B06-778E-4A52-AFFF-C9A7B632DCE3}</Project>
-      <Name>ReadReco.Model</Name>
-    </ProjectReference>
+    <Compile Include="Repository\Mongo\MongoContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
