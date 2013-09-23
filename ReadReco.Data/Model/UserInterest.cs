@@ -11,6 +11,7 @@ namespace ReadReco.Data.Model
 		public List<string> LikedDocs { get; set; }
 		public List<Label> Labels { get; set; }
 		public int WordsCount { get; set; }
+		public List<DocumentRating> Ratings { get; set; }
 
 		public UserInterest()
 		{

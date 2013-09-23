@@ -51,6 +51,22 @@ namespace ReadReco.Services
 			return feeds;
 		}
 
+		public List<BagOfWords> GetAllBags()
+		{
+			List<Feed> feeds = GetFeeds();
+			List<BagOfWords> bags = new List<BagOfWords>();
+			foreach (Feed feed in feeds)
+			{
+				foreach (FeedItem doc in feed.Items)
+				{
+					BagOfWords bag = new BagOfWords(doc.Title, doc.Id, feed.Name);
+					bag.AddDocument(doc.Title, doc.ContentText, doc.Tags);
+					bags.Add(bag);
+				}
+			}
+			return bags;
+		}
+
 		public void ExtractAllLabels()
 		{
 			FeedRepository fRep = new FeedRepository();
@@ -76,7 +92,7 @@ namespace ReadReco.Services
 
 		public BagOfWords AnalyzeFeed(Feed feed)
 		{
-			BagOfWords bag = new BagOfWords(feed.Name, feed.URL);
+			BagOfWords bag = new BagOfWords(feed.Name, feed.URL, feed.Name);
 			foreach (FeedItem item in feed.Items)
 			{
 				bag.AddDocument(item.Title, item.ContentText, item.Tags);
@@ -91,7 +107,7 @@ namespace ReadReco.Services
 
 			foreach (FeedItem item in feed.Items)
 			{
-				BagOfWords bag = new BagOfWords(item.Title, feed.URL);
+				BagOfWords bag = new BagOfWords(item.Title, item.Id, feed.Name);
 				bag.AddDocument(item.Title, item.ContentText, item.Tags);
 				yield return bag;
 			}

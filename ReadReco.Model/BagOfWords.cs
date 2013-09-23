@@ -13,7 +13,9 @@ namespace ReadReco.Model
 	public class BagOfWords
 	{
 		public string Name { get; private set; }
+		public string DocumentID { get; private set; }
 		public string Type { get; private set; }
+		private UserInterest Interest { get; set; }
 
 		public List<string> Words { get; private set; }
 		public Dictionary<string, string> StemmedWords { get; private set; }
@@ -23,7 +25,7 @@ namespace ReadReco.Model
 
 		private HashSet<string> stopWords = new HashSet<string>();
 		private Tokenizer tokenizer;
-		private const double LabelThreshold = 0.2; // 20% //0.003;
+		private const double LabelThreshold = 0.2; // 20%
 		private const int TitleWeight = 2;
 		private const int TagWeight = 2;
 		
@@ -38,15 +40,17 @@ namespace ReadReco.Model
 			ReadStopWords();
 		}
 
-		public BagOfWords(string name, string type) : this()
+		public BagOfWords(string name, string documentId, string type) : this()
 		{
 			Name = name;
 			Type = type;
+			DocumentID = documentId;
 		}
 
 		public BagOfWords(string name, UserInterest interest) : this()
 		{
 			Name = name;
+			Interest = interest;
 			foreach (Label label in interest.Labels)
 				Labels.Add(label.Name, new WordFrequency() { Count = label.Count, Frequency = label.Frequency });
 		}
@@ -94,6 +98,22 @@ namespace ReadReco.Model
 			DocumentsCount++;
 		}
 
+		public List<DocumentRating> CalculateRatings(List<BagOfWords> bags)
+		{
+			Clustering clustering = new Clustering();
+			var ratings = new List<DocumentRating>();
+			for (int i = 0; i < bags.Count - 1; i++)
+			{
+				BagOfWords bag = bags[i];
+				if (Interest != null && Interest.LikedDocs.Contains(bag.DocumentID))
+					continue;
+				double sim = clustering.GetCosineDistance(this, bag, true);
+				ratings.Add(new DocumentRating() { ID = bag.DocumentID, Name = bag.Name, Type = bag.Type, Rating = sim });
+			}
+
+			return ratings.OrderByDescending(rating => rating.Rating).ToList();
+		}
+
 		public List<KeyValuePair<string, WordFrequency>> GetSortedWords()
 		{
 			return GetSortedDictionary(WordsFrequency);
@@ -106,15 +126,7 @@ namespace ReadReco.Model
 
 		private List<KeyValuePair<string, WordFrequency>> GetSortedDictionary(Dictionary<string, WordFrequency> dict)
 		{
-			List<KeyValuePair<string, WordFrequency>> sortedList = dict.ToList();
-
-			sortedList.Sort((firstPair, nextPair) =>
-				{
-					return firstPair.Value.Count.CompareTo(nextPair.Value.Count);
-				}
-			);
-
-			return sortedList;
+			return dict.OrderByDescending(value => value.Value.Count).ToList();
 		}
 
 		private string NormalizeText(string text)
